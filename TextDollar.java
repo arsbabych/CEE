@@ -94,9 +94,8 @@ class AfterNineNumerator extends HundredNumerator {
 
     @Override
     public StringBuffer numerate(int number) {
-        super.numerate(number);
+        StringBuffer sb = super.numerate(number);
 
-        StringBuffer sb = new StringBuffer();
         first = number % 10;
         second = (number - first) % 100 / 10;
 
