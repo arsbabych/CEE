@@ -1,3 +1,5 @@
+package org.arsen.cee.hard;
+
 import java.io.*;
 
 public class TextDollar {
@@ -47,7 +49,6 @@ class HundredNumerator extends AbstractNumerator {
     protected int second;
     protected int first;
 
-    @Override
     public StringBuffer numerate(int number) {
         StringBuffer sb = new StringBuffer();
 

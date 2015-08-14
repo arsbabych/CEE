@@ -1,3 +1,5 @@
+package org.arsen.cee.easy;
+
 /**
  * Created by arsen on 11.08.15.
  */

@@ -1,3 +1,5 @@
+package org.arsen.cee.easy;
+
 import java.io.*;
 
 public class WordToDigit {

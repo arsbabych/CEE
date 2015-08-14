@@ -1,3 +1,5 @@
+package org.arsen.cee.medium;
+
 import java.io.*;
 
 /**
