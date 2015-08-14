@@ -404,7 +404,7 @@ class AStarAlgorithm {
         workingCell.setInOpenList(false);
 
         addCellsToOpenList();
-        //redefineParents();
+        redefineParents();
     }
 
     private void redefineParents() {
@@ -426,34 +426,34 @@ class AStarAlgorithm {
 
                 boolean flag = true;
                 Cell newParent = null;
-                
+
                 for (int j = 0; j < 4; j++) {
 //            xCoordinate = workingCell.getX() + horizontal[i];
 //            yCoordinate = workingCell.getY() + vertical[i];
                     xCoordinate = workingCell.getX() + vertical[i];
                     yCoordinate = workingCell.getY() + horizontal[i];
 
-//                    if (isCoordinatesInTheLabyrinth(xCoordinate, yCoordinate) &&
-//                            !labyrinthSolver.getLabyrinth()[xCoordinate][yCoordinate].getValue().equals(Value.IGNORED) &&
-//                            labyrinthSolver.getLabyrinth()[xCoordinate][yCoordinate].isInClosedList() &&
-//                            !labyrinthSolver.getLabyrinth()[xCoordinate][yCoordinate].isInOpenList()) {
-//
-//                        Cell targetClosedListCell = labyrinthSolver.getLabyrinth()[xCoordinate][yCoordinate];
-//
-//                        if (flag) {
-//                            newParent = targetClosedListCell;
-//                            flag = false;
-//                        } else if (targetClosedListCell.getG() < newParent.getG()) {
-//                                newParent = targetClosedListCell;
-//                        }
-//                    }
+                    if (isCoordinatesInTheLabyrinth(xCoordinate, yCoordinate) &&
+                            !labyrinthSolver.getLabyrinth()[xCoordinate][yCoordinate].getValue().equals(Value.IGNORED) &&
+                            labyrinthSolver.getLabyrinth()[xCoordinate][yCoordinate].isInClosedList() &&
+                            !labyrinthSolver.getLabyrinth()[xCoordinate][yCoordinate].isInOpenList()) {
+
+                        Cell targetClosedListCell = labyrinthSolver.getLabyrinth()[xCoordinate][yCoordinate];
+
+                        if (flag) {
+                            newParent = targetClosedListCell;
+                            flag = false;
+                        } else if (targetClosedListCell.getG() < newParent.getG()) {
+                                newParent = targetClosedListCell;
+                        }
+                    }
                 }
 
-//                if (newParent != null) {
-//                    targetCell.setParent(newParent);
-//                    targetCell.setG(newParent.getG() + 10 * (horizontal[i] + vertical[i]));
-//                    targetCell.setF(targetCell.getG() + targetCell.getH());
-//                }
+                if (newParent != null) {
+                    targetCell.setParent(newParent);
+                    targetCell.setG(newParent.getG() + 10 * (horizontal[i] + vertical[i]));
+                    targetCell.setF(targetCell.getG() + targetCell.getH());
+                }
             }
         }
     }
