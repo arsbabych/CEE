@@ -13,19 +13,20 @@ public class LabyrinthSolver {
     List<String> rawLabyrinth = new LinkedList<String>();
     private int width;
     private int heigth = 1;
+    public static String path;
 
     public LabyrinthSolver initLabyrinth() {
-        for (int i = 0; i < getWidth(); i++) {
+        for (int i = 0; i < getHeigth(); i++) {
             String rawLine = rawLabyrinth.get(i);
 
-            for (int j = 0; j < getHeigth(); j++) {
+            for (int j = 0; j < getWidth(); j++) {
                 if (i == 0) {
                     if (rawLine.charAt(j) == ' ') {
                         getLabyrinth()[i][j] = new Cell(i, j, 'S');
                         continue;
                     }
                 }
-                if (i == getWidth() - 1) {
+                if (i == getHeigth() - 1) {
                     if (rawLine.charAt(j) == ' ') {
                         getLabyrinth()[i][j] = new Cell(i, j, 'F');
                         continue;
@@ -39,19 +40,15 @@ public class LabyrinthSolver {
     }
 
     public void printLabyrinth() {
-        for (int i = 0; i < getWidth(); i++) {
+        for (int i = 0; i < getHeigth(); i++) {
             StringBuffer sb = new StringBuffer();
 
-            for (int j = 0; j < getHeigth(); j++) {
+            for (int j = 0; j < getWidth(); j++) {
                 sb.append(getLabyrinth()[i][j].getValue().getCharValue());
             }
 
             System.out.println(sb.toString());
         }
-
-        System.out.println();
-        System.out.println();
-        System.out.println();
     }
     
     public void setLabyrinth(Cell[][] labyrinth) {
@@ -59,6 +56,7 @@ public class LabyrinthSolver {
     }
     
     public LabyrinthSolver createLabyrinthFromFile(String path) throws IOException {
+        setHeigth(1);
         File file = new File(path);
 
         if (file.isFile()) {
@@ -73,18 +71,19 @@ public class LabyrinthSolver {
                 rawLabyrinth.add(line);
                 setHeigth(getHeigth() + 1);
             }
+            is.close();
         }
 
-        setLabyrinth(new Cell[width][heigth]);
+        setLabyrinth(new Cell[heigth][width]);
         initLabyrinth();
-
+        rawLabyrinth = new LinkedList<String>();
         return this;
     }    
 
     public static void main(String[] args) throws IOException {
         LabyrinthSolver labyrinthSolver = new LabyrinthSolver();
+        path = args[0];
         labyrinthSolver.createLabyrinthFromFile(args[0]);
-        labyrinthSolver.printLabyrinth();
 
         AStarAlgorithm aStarAlgorithm = new AStarAlgorithm(labyrinthSolver);
         labyrinthSolver = aStarAlgorithm.solveLabyrinth();
@@ -113,8 +112,8 @@ public class LabyrinthSolver {
     }
 
     public void defineHs(Cell finishCell) {
-        for (int i = 0; i < getWidth(); i++) {
-            for (int j = 0; j < getHeigth(); j++) {
+        for (int i = 0; i < getHeigth(); i++) {
+            for (int j = 0; j < getWidth(); j++) {
                 if (getLabyrinth()[i][j].getValue().getCharValue() == '*') {
                     continue;
                 }
@@ -305,15 +304,13 @@ class AStarAlgorithm {
         }
     }
 
-    public LabyrinthSolver solveLabyrinth() {
+    public LabyrinthSolver solveLabyrinth() throws IOException {
 
         initializeHValues();
 
         do {
             step();
-            labyrinthSolver.printLabyrinth();
         } while (!isSolved());
-
         findPath();
 
         return getLabyrinthSolver();
@@ -328,7 +325,7 @@ class AStarAlgorithm {
 
     }
 
-    public void findPath() {
+    public void findPath() throws IOException {
         List<Cell> path = new LinkedList<Cell>();
         path.add(finishCell);
         Cell targetCell = finishCell;
@@ -340,10 +337,10 @@ class AStarAlgorithm {
 
         path.add(startCell);
 
-        labyrinthSolver = getLabyrinthSolver().initLabyrinth();
+        labyrinthSolver = getLabyrinthSolver().createLabyrinthFromFile(LabyrinthSolver.path);
 
-        for (int i = 0; i < labyrinthSolver.getWidth(); i++) {
-            for (int j = 0; j < labyrinthSolver.getHeigth(); j++) {
+        for (int i = 0; i < labyrinthSolver.getHeigth(); i++) {
+            for (int j = 0; j < labyrinthSolver.getWidth(); j++) {
                 for (Cell cell : path) {
                     if (labyrinthSolver.getLabyrinth()[i][j].getX() == cell.getX()
                      && labyrinthSolver.getLabyrinth()[i][j].getY() == cell.getY()) {
@@ -364,8 +361,6 @@ class AStarAlgorithm {
         int yCoordinate;
 
         for (int i = 0; i < 4; i++) {
-//            xCoordinate = workingCell.getX() + horizontal[i];
-//            yCoordinate = workingCell.getY() + vertical[i];
             xCoordinate = workingCell.getX() + vertical[i];
             yCoordinate = workingCell.getY() + horizontal[i];
 
@@ -412,8 +407,6 @@ class AStarAlgorithm {
         int yCoordinate;
 
         for (int i = 0; i < 4; i++) {
-//            xCoordinate = workingCell.getX() + horizontal[i];
-//            yCoordinate = workingCell.getY() + vertical[i];
             xCoordinate = workingCell.getX() + vertical[i];
             yCoordinate = workingCell.getY() + horizontal[i];
 
@@ -424,14 +417,9 @@ class AStarAlgorithm {
 
                 Cell targetCell = labyrinthSolver.getLabyrinth()[xCoordinate][yCoordinate];
 
-                boolean flag = true;
-                Cell newParent = null;
-
                 for (int j = 0; j < 4; j++) {
-//            xCoordinate = workingCell.getX() + horizontal[i];
-//            yCoordinate = workingCell.getY() + vertical[i];
-                    xCoordinate = workingCell.getX() + vertical[i];
-                    yCoordinate = workingCell.getY() + horizontal[i];
+                    xCoordinate = targetCell.getX() + vertical[j];
+                    yCoordinate = targetCell.getY() + horizontal[j];
 
                     if (isCoordinatesInTheLabyrinth(xCoordinate, yCoordinate) &&
                             !labyrinthSolver.getLabyrinth()[xCoordinate][yCoordinate].getValue().equals(Value.IGNORED) &&
@@ -440,27 +428,20 @@ class AStarAlgorithm {
 
                         Cell targetClosedListCell = labyrinthSolver.getLabyrinth()[xCoordinate][yCoordinate];
 
-                        if (flag) {
-                            newParent = targetClosedListCell;
-                            flag = false;
-                        } else if (targetClosedListCell.getG() < newParent.getG()) {
-                                newParent = targetClosedListCell;
+                        if (targetClosedListCell.getG() < targetCell.getParent().getG()) {
+                            targetCell.setParent(targetClosedListCell);
+                            targetCell.setG(targetClosedListCell.getG() + 10 * Math.abs(horizontal[i] + vertical[i]));
+                            targetCell.setF(targetCell.getG() + targetCell.getH());
                         }
                     }
-                }
-
-                if (newParent != null) {
-                    targetCell.setParent(newParent);
-                    targetCell.setG(newParent.getG() + 10 * (horizontal[i] + vertical[i]));
-                    targetCell.setF(targetCell.getG() + targetCell.getH());
                 }
             }
         }
     }
 
     private boolean isCoordinatesInTheLabyrinth(int xCoordinate, int yCoordinate) {
-        return xCoordinate > 0 && xCoordinate < labyrinthSolver.getWidth() &&
-               yCoordinate > 0 && yCoordinate < labyrinthSolver.getHeigth();
+        return xCoordinate > 0 && xCoordinate < labyrinthSolver.getHeigth() &&
+               yCoordinate > 0 && yCoordinate < labyrinthSolver.getWidth();
 
     }
 
