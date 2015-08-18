@@ -5,6 +5,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,22 +27,92 @@ public class UriComparison {
     }
 
     private static String transformUri(String uri) throws UnsupportedEncodingException {
-        String result = URLDecoder.decode(uri, "UTF-8");
-        Pattern pattern = Pattern.compile("(.*)://(.*):([0-9]*)(.*)");
+        String result = replaceWrongPercentEncodingCandidatesPresent(uri);
+        result = URLDecoder.decode(result, "UTF-8");
+//        Pattern pattern = Pattern.compile("(.*)://(.*):([0-9]*)(.*)");
+        Pattern pattern = Pattern.compile("(.*)://(.*)(:[0-9]*)(/.*)");
         Matcher matcher = pattern.matcher(result);
         StringBuilder sb = new StringBuilder();
 
-        while(matcher.find()) {
+        if (matcher.find()) {
             if (matcher.group(3).equals("")) {
-                return sb.append(matcher.group(1).toLowerCase()).append("://").append(matcher.group(2).toLowerCase())
+                result = sb.append(matcher.group(1).toLowerCase()).append("://").append(matcher.group(2).toLowerCase())
                          .append(":80").append(matcher.group(4)).toString();
+
+                pattern = Pattern.compile(" ");
+                matcher = pattern.matcher(result);
+
+                while(matcher.find()) {
+                    result = matcher.replaceAll("%");
+                }
+
+                return result;
             } else {
-                return sb.append(matcher.group(1).toLowerCase()).append("://").append(matcher.group(2).toLowerCase())
+                result = sb.append(matcher.group(1).toLowerCase()).append("://").append(matcher.group(2).toLowerCase())
                          .append(matcher.group(3)).append(matcher.group(4)).toString();
+
+                pattern = Pattern.compile(" ");
+                matcher = pattern.matcher(result);
+
+                while(matcher.find()) {
+                    result = matcher.replaceAll("%");
+                }
+
+                return result;
             }
+        } else {
+            pattern = Pattern.compile("(.*)://([a-zA-Z0-9\\.]*)(.*)");
+            matcher = pattern.matcher(result);
+            matcher.find();
+            result = sb.append(matcher.group(1).toLowerCase()).append("://").append(matcher.group(2).toLowerCase())
+                    .append(":80").append(matcher.group(3)).toString();
+
+            pattern = Pattern.compile(" ");
+            matcher = pattern.matcher(result);
+
+            while(matcher.find()) {
+                result = matcher.replaceAll("%");
+            }
+
+            return result;
+        }
+    }
+
+    private static String replaceWrongPercentEncodingCandidatesPresent(String uri) {
+        List<Integer> wrongIndexes = new LinkedList<Integer>();
+        String result = uri;
+        int prevIndex = 0;
+        int counter = 0;
+
+        do {
+            int index = uri.indexOf("%");
+            if (index == -1) {
+                break;
+            }
+            String candidate = uri.substring(index, index + 3);
+            uri = uri.substring(index + 1);
+
+            Pattern pattern = Pattern.compile("%[\\dA-Z|A-Z\\d]{2}");
+            Matcher matcher = pattern.matcher(candidate);
+
+            if (!matcher.matches()) {
+                wrongIndexes.add(index + prevIndex);
+            }
+            prevIndex = result.length() - uri.length();
+        } while (uri.length() > 2);
+
+        for (int i : wrongIndexes) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(result.substring(counter, i)).append(" ");
+
+            if (i != result.length() - 1) {
+                sb.append(result.substring(i + 1));
+            }
+
+            result = sb.toString();
         }
 
-        return sb.toString();
+        return result;
     }
 
     public static void main(String[] args) throws IOException, URISyntaxException {
@@ -53,7 +125,7 @@ public class UriComparison {
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
 
             while ((line = br.readLine()) != null) {
-                result = line.split(" ");
+                result = line.split(";");
 
                 System.out.println(compare(result));
             }
