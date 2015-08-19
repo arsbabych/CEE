@@ -35,16 +35,22 @@ public class LowestCommonAncestor {
 
     private static int findLowestCommonAncestor(BinarySearchTree tree, String value1, String value2) {
 
-        int parent1 = tree.getParent(Integer.parseInt(value1));
-        int parent2 = tree.getParent(Integer.parseInt(value2));
+        TreeNode parent1 = tree.getParent(Integer.parseInt(value1));
+        TreeNode parent2 = tree.getParent(Integer.parseInt(value2));
 
-        if (parent1 == parent2) {
-            return parent1;
-        } else {
+        while (true) {
+            if (parent1.getValue() == Integer.parseInt(value2) || parent2.getValue() == Integer.parseInt(value1)) {
+                return parent1.getValue() == Integer.parseInt(value2) ? parent1.getValue() : parent2.getValue();
+            }
 
+            if (parent1.getValue() == parent2.getValue()) {
+                return parent1.getValue();
+            } else if (parent1.getLevel() < parent2.getLevel()) {
+                parent2 = tree.getParent(parent2.getValue());
+            } else if (parent2.getLevel() < parent1.getLevel()) {
+                parent1 = tree.getParent(parent1.getValue());
+            }
         }
-
-
     }
 }
 
@@ -124,24 +130,21 @@ class BinarySearchTree {
         }
     }
 
-    public int getParent(int value) {
+    public TreeNode getParent(int value) {
         if (root == null) {
             throw new RuntimeException("Tree does not contain nodes yet");
         } else if (root.getValue() == value) {
-            throw new RuntimeException("Target node does not have parents");
+            return root;
         } else {
 
             TreeNode targetNode = root;
             TreeNode parentNode = findParent(targetNode, value);
 
             if (parentNode != null) {
-                return parentNode.getValue();
+                return parentNode;
             } else {
                 throw new RuntimeException("Value is not presents in the tree");
             }
-
-
-            //return root.getParent(value);
         }
     }
 
