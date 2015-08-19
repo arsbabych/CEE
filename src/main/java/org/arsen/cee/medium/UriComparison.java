@@ -20,16 +20,15 @@ public class UriComparison {
         result[1] = transformUri(result[1]);
 
         if (result[1].equals(result[0])) {
-            return "true";
+            return "True";
         }
 
-        return "false";
+        return "False";
     }
 
     private static String transformUri(String uri) throws UnsupportedEncodingException {
         String result = replaceWrongPercentEncodingCandidatesPresent(uri);
         result = URLDecoder.decode(result, "UTF-8");
-//        Pattern pattern = Pattern.compile("(.*)://(.*):([0-9]*)(.*)");
         Pattern pattern = Pattern.compile("(.*)://(.*)(:[0-9]*)(/.*)");
         Matcher matcher = pattern.matcher(result);
         StringBuilder sb = new StringBuilder();
