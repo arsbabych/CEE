@@ -13,16 +13,12 @@ public class ABusNetwork {
     public static final String OVERALL_REGEX = "([0-9]+,[0-9]+)\\);\\x20(.*)";
     public static final String ROUTE_REGEX = "R[0-9]+=\\[([0-9,]+)\\]";
 
-    static List<Node> busNetwork = new ArrayList<Node>();
-    static int routeNumber = 1;
-
     public static void main(String[] args) throws IOException {
 
         File file = new File(args[0]);
         String line;
 
         Pattern pattern = Pattern.compile(OVERALL_REGEX);
-        Matcher matcher;
 
         if (file.isFile()) {
             InputStream is = new FileInputStream(file);
@@ -30,40 +26,12 @@ public class ABusNetwork {
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
 
             while ((line = br.readLine()) != null) {
-
-                matcher = pattern.matcher(line);
-                matcher.find();
-
-                String points = matcher.group(1);
-                String routes = matcher.group(2);
-
-                Pattern pattern2 = Pattern.compile(ROUTE_REGEX);
-                Matcher matcher2 = pattern2.matcher(routes);
-
-                List<List<Integer>> routesList = new ArrayList<List<Integer>>();
-
-
-
-                while (matcher2.find()) {
-                    String routeStations = matcher2.group(1);
-                    List<Integer> route = new ArrayList<Integer>();
-
-                    for (String s : routeStations.split(",")) {
-                        route.add(Integer.parseInt(s));
-                    }
-
-                    routesList.add(route);
-                }
-
-                for (List<Integer> route : routesList) {
-                    List<Node> nodeCandidates = initNodeCandidates(route);
-                    addToBusNetwork(nodeCandidates);
-                }
+                System.out.println(findOptimalRoute(line, pattern));
             }
         }
     }
 
-    public static List<Node> initNodeCandidates(List<Integer> candidates) {
+    public static List<Node> initNodeCandidates(List<Integer> candidates, Integer routeNumber) {
         List<Node> result = new ArrayList<Node>();
 
         for (Integer i : candidates) {
@@ -73,7 +41,7 @@ public class ABusNetwork {
         return result;
     }
 
-    public static void addToBusNetwork(List<Node> candidates) {
+    public static void addToBusNetwork(List<Node> candidates, List<Node> busNetwork) {
         for (Node node : candidates) {
 
             if (candidates.indexOf(node) != candidates.size() - 1) {
@@ -93,8 +61,87 @@ public class ABusNetwork {
 
             busNetwork.add(node);
         }
+    }
 
-        ABusNetwork.routeNumber++;
+    private static Integer findOptimalRoute(String line, Pattern pattern) {
+        Matcher matcher = pattern.matcher(line);
+        matcher.find();
+
+        String points = matcher.group(1);
+        String routes = matcher.group(2);
+
+        int[] dests = splitDests(points);
+
+        List<Node> busNetwork = fillBusNetwork(prepareRoutesList(routes));
+
+        return findOptimalRoute(busNetwork, dests);
+    }
+
+    private static Integer findOptimalRoute(List<Node> busNetwork, int[] dests) {
+
+        List<Node> firstNodeRepresentation = new ArrayList<Node>();
+        List<Node> destNodeRepresentation = new ArrayList<Node>();
+        Iterator iterator = busNetwork.iterator();
+
+        while (iterator.hasNext()) {
+            Node node = (Node) iterator.next();
+
+            if (node.getNumber() == dests[0]) {
+                firstNodeRepresentation.add(node);
+            }
+
+            if (node.getNumber() == dests[1]) {
+                destNodeRepresentation.add(node);
+            }
+        }
+
+
+
+        return null;
+
+    }
+
+    private static int[] splitDests(String points) {
+        String[] strings = points.split(",");
+        int[] dests = new int[strings.length];
+
+        for (int i = 0; i < strings.length; i++) {
+            dests[i] = Integer.parseInt(strings[i]);
+        }
+
+        return dests;
+    }
+
+    private static List<List<Integer>> prepareRoutesList(String routes) {
+        Pattern route_pattern = Pattern.compile(ROUTE_REGEX);
+        Matcher route_matcher = route_pattern.matcher(routes);
+
+        List<List<Integer>> routesList = new ArrayList<List<Integer>>();
+
+        while (route_matcher.find()) {
+            String routeStations = route_matcher.group(1);
+            List<Integer> route = new ArrayList<Integer>();
+
+            for (String s : routeStations.split(",")) {
+                route.add(Integer.parseInt(s));
+            }
+
+            routesList.add(route);
+        }
+
+        return routesList;
+    }
+
+    private static List<Node> fillBusNetwork(List<List<Integer>> routesList) {
+        List<Node> busNetwork = new ArrayList<Node>();
+        Integer routeNumber = 1;
+
+        for (List<Integer> route : routesList) {
+            List<Node> nodeCandidates = initNodeCandidates(route, routeNumber++);
+            addToBusNetwork(nodeCandidates, busNetwork);
+        }
+
+        return busNetwork;
     }
 
 }
