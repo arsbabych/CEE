@@ -42,24 +42,38 @@ public class ABusNetwork {
     }
 
     public static void addToBusNetwork(List<Node> candidates, List<Node> busNetwork) {
+        c:
         for (Node node : candidates) {
-
-            if (candidates.indexOf(node) != candidates.size() - 1) {
-                node.getNeighbors().put(candidates.get(candidates.indexOf(node) + 1), TIME.ROUTE_TIME);
-            }
-
-            if (candidates.indexOf(node) != 0) {
-                node.getNeighbors().put(candidates.get(candidates.indexOf(node) - 1), TIME.ROUTE_TIME);
-            }
-
             for (Node station : busNetwork) {
                 if (station.getNumber() == node.getNumber()) {
-                    station.getNeighbors().put(node, TIME.TRANSFER_TIME);
-                    node.getNeighbors().put(station, TIME.TRANSFER_TIME);
+                    station.getRoute().add(node.getRoute().get(0));
+                    //addNeighbours(candidates, station);
+                    continue c;
                 }
             }
 
+            //addNeighbours(candidates, node);
+
             busNetwork.add(node);
+        }
+    }
+
+    private static void addNeighbours(List<Node> candidates, Node node) {
+        Node targetNode = null;
+
+        for (Node candidateNode : candidates) {
+            if (candidateNode.getNumber() == node.getNumber()) {
+                targetNode = candidateNode;
+                break;
+            }
+        }
+
+        if (candidates.indexOf(targetNode) != candidates.size() - 1) {
+            node.getNeighbors().add(candidates.get(candidates.indexOf(targetNode) + 1));
+        }
+
+        if (candidates.indexOf(targetNode) != 0) {
+            node.getNeighbors().add(candidates.get(candidates.indexOf(targetNode) - 1));
         }
     }
 
@@ -79,26 +93,109 @@ public class ABusNetwork {
 
     private static Integer findOptimalRoute(List<Node> busNetwork, int[] dests) {
 
-        List<Node> firstNodeRepresentation = new ArrayList<Node>();
-        List<Node> destNodeRepresentation = new ArrayList<Node>();
         Iterator iterator = busNetwork.iterator();
+        Node firstNode = null;
+        Node destNode = null;
 
         while (iterator.hasNext()) {
             Node node = (Node) iterator.next();
 
             if (node.getNumber() == dests[0]) {
-                firstNodeRepresentation.add(node);
+                firstNode = node;
+
+                if (destNode != null) {
+                    break;
+                } else {
+                    continue;
+                }
             }
 
             if (node.getNumber() == dests[1]) {
-                destNodeRepresentation.add(node);
+                destNode = node;
+
+                if (firstNode != null) {
+                    break;
+                }
             }
         }
 
+        initLengths(firstNode, destNode);
+
+        return destNode.getLength();
+
+    }
+
+    private static void initLengths(Node firstNode, Node destNode) {
+        firstNode.setLength(0);
+        firstNode.setVisited(true);
+        Node targetNode = firstNode;
+        Node prev = null;
+        Integer currentRoute;
+
+        if (firstNode.getRoute().size() == 1) {
+            currentRoute = firstNode.getRoute().get(0);
+        } else {
+            currentRoute = Integer.MAX_VALUE;
+        }
+
+        while (destNode.getLength() == Integer.MAX_VALUE) {
+            for (Node node : targetNode.getNeighbors()) {
+                if (node.getLength() == Integer.MAX_VALUE) {
+                    boolean isOnSameRoute = false;
+
+                    breakpoint:
+                    for (Integer route : node.getRoute()) {
+                        for (Integer targetRoute : targetNode.getRoute()) {
+                            if (route.equals(targetRoute) && route.equals(currentRoute)) {
+                                isOnSameRoute = true;
+                                break breakpoint;
+                            }
+                        }
+                    }
+
+                    if (isOnSameRoute) {
+                        node.setLength(targetNode.getLength() + TIME.ROUTE_TIME.getTime());
+                    } else {
+                        node.setLength(targetNode.getLength() + TIME.ROUTE_TIME.getTime() + TIME.TRANSFER_TIME.getTime());
+                    }
+                }
+            }
+
+            boolean flag = false;
+            int counter = 0;
+            Node oldTargetNode = targetNode;
 
 
-        return null;
+            for (Node node : targetNode.getNeighbors()) {
+                if (!node.isVisited()) {
+                    counter++;
+                }
+            }
 
+            if (counter >= 2) {
+                for (Node node : targetNode.getNeighbors()) {
+                    if (!node.isVisited() && !flag) {
+                        targetNode = node;
+                        targetNode.setVisited(true);
+                        flag = true;
+                        continue;
+                    } else if (flag) {
+                        prev = node;
+                    }
+                }
+            } else {
+                for (Node node : targetNode.getNeighbors()) {
+                    if (!node.isVisited()) {
+                        targetNode = node;
+                        targetNode.setVisited(true);
+                    }
+                }
+            }
+
+            if (oldTargetNode == targetNode) {
+                targetNode = prev;
+            }
+        }
     }
 
     private static int[] splitDests(String points) {
@@ -141,31 +238,56 @@ public class ABusNetwork {
             addToBusNetwork(nodeCandidates, busNetwork);
         }
 
+        fillNeighbors(busNetwork, routesList);
+
         return busNetwork;
+    }
+
+    private static void fillNeighbors(List<Node> busNetwork, List<List<Integer>> routesList) {
+        for (Node node : busNetwork) {
+            breakpoint3:
+            for (List<Integer> route : routesList) {
+
+                if (route.contains(node.getNumber())) {
+
+                        if (route.indexOf(node.getNumber()) != route.size() - 1) {
+                            for (Node neighbor : busNetwork) {
+                                if (neighbor.getNumber().equals(route.get(route.indexOf(node.getNumber()) + 1))) {
+                                    node.getNeighbors().add(neighbor);
+
+                                }
+                            }
+                        }
+
+                        if (route.indexOf(node.getNumber()) != 0) {
+                            for (Node neighbor : busNetwork) {
+                                if (neighbor.getNumber().equals(route.get(route.indexOf(node.getNumber()) - 1))) {
+                                    node.getNeighbors().add(neighbor);
+
+                                }
+                            }
+                        }
+                }
+            }
+        }
     }
 
 }
 
 class Node {
 
-    private Integer route;
+    private List<Integer> route;
     private Integer number;
-    private Integer order;
+    private Integer length = Integer.MAX_VALUE;
+    private boolean visited;
 
     Node(int number, int route) {
         this.number = number;
-        this.route = route;
+        this.setRoute(new ArrayList<Integer>());
+        this.getRoute().add(route);
     }
 
-    private Map<Node, TIME> neighbors = new LinkedHashMap<Node, TIME>();
-
-    public Integer getRoute() {
-        return route;
-    }
-
-    public void setRoute(Integer route) {
-        this.route = route;
-    }
+    private List<Node> neighbors = new LinkedList<Node>();
 
     public Integer getNumber() {
         return number;
@@ -175,20 +297,36 @@ class Node {
         this.number = number;
     }
 
-    public Integer getOrder() {
-        return order;
+    public Integer getLength() {
+        return length;
     }
 
-    public void setOrder(Integer order) {
-        this.order = order;
+    public void setLength(Integer length) {
+        this.length = length;
     }
 
-    public Map<Node, TIME> getNeighbors() {
+    public List<Node> getNeighbors() {
         return neighbors;
     }
 
-    public void setNeighbors(Map<Node, TIME> neighbors) {
+    public void setNeighbors(List<Node> neighbors) {
         this.neighbors = neighbors;
+    }
+
+    public List<Integer> getRoute() {
+        return route;
+    }
+
+    public void setRoute(List<Integer> route) {
+        this.route = route;
+    }
+
+    public boolean isVisited() {
+        return visited;
+    }
+
+    public void setVisited(boolean visited) {
+        this.visited = visited;
     }
 }
 
