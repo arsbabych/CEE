@@ -372,7 +372,7 @@ class AStarAlgorithm {
                 Cell targetCell = labyrinthSolver.getLabyrinth()[xCoordinate][yCoordinate];
                 openedList.add(targetCell);
 
-                targetCell.setG(targetCell.getG() + 10 * (horizontal[i] + vertical[i]));
+                targetCell.setG(workingCell.getG() + 10);
                 targetCell.setF(targetCell.getG() + targetCell.getH());
                 targetCell.setParent(workingCell);
                 targetCell.setValue(Value.OPEN);
