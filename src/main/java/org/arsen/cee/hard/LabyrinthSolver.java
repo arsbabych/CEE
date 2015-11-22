@@ -50,11 +50,11 @@ public class LabyrinthSolver {
             System.out.println(sb.toString());
         }
     }
-    
+
     public void setLabyrinth(Cell[][] labyrinth) {
-        this.labyrinth = labyrinth;        
+        this.labyrinth = labyrinth;
     }
-    
+
     public LabyrinthSolver createLabyrinthFromFile(String path) throws IOException {
         setHeigth(1);
         File file = new File(path);
@@ -78,7 +78,7 @@ public class LabyrinthSolver {
         initLabyrinth();
         rawLabyrinth = new LinkedList<String>();
         return this;
-    }    
+    }
 
     public static void main(String[] args) throws IOException {
         LabyrinthSolver labyrinthSolver = new LabyrinthSolver();
@@ -430,7 +430,7 @@ class AStarAlgorithm {
 
                         if (targetClosedListCell.getG() < targetCell.getParent().getG()) {
                             targetCell.setParent(targetClosedListCell);
-                            targetCell.setG(targetClosedListCell.getG() + 10 * Math.abs(horizontal[i] + vertical[i]));
+                            targetCell.setG(targetClosedListCell.getG() + 10);
                             targetCell.setF(targetCell.getG() + targetCell.getH());
                         }
                     }
